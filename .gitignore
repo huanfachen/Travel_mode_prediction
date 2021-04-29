@@ -3,6 +3,11 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# resampled data
+data/*.*.csv
+
+# huge model files
+Models/*.pkl
 # C extensions
 *.so
 
