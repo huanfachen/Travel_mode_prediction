@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Created on Thr May 06 17:01:00 2021
+Created on Tue Apr 20 17:31:00 2021
 
-This class is a pipeline for using XGBoost models for mode analysis. It would preprocess the csv files, train a model, analyse it, and output the economic metrics to files.
+This class is a pipeline for using DNN models for mode analysis. It would preprocess the csv files, train a model, analyse it, and output the economic metrics to files.
 You can run only some steps
 
 @author: Huanfa chen
@@ -11,7 +11,7 @@ You can run only some steps
 
 # from analysis import Analysis
 # from typing_extensions import TypeVarTuple
-from Analysis_XGBoost import Analysis_XGBoost
+from Analysis_Neural_Net import Analysis_Neural_Net
 from Plot_Neural_Net import Plot_Neural_Net
 from Preprocess_data_DNN import Preprocess_data_DNN
 import matplotlib.pyplot as plt
@@ -127,6 +127,8 @@ if __name__ == "__main__":
                      # input_data = pickle.load(f)
                      # train
                      for i in range(num_models):
+                            ## TODO: implement training code for XGBoost
+                            
                             model_tf_file_name = "{}_{}_model_{}".format(data_name, method_name, str(i))
                             F_DNN = FeedForward_DNN(num_alt,model_tf_file_name,INCLUDE_VAL_SET,INCLUDE_RAW_SET, dir_model)
                             F_DNN.load_data(input_data, input_data_raw, num_training_samples)
@@ -139,6 +141,7 @@ if __name__ == "__main__":
                             F_DNN.train_model()
               
               if ANALYSIS_MODEL is True:
+                     ## TODO: implement training code for XGBoost
                      # why is raw_data_dir necessary here?
                      m = Analysis_Neural_Net(dir_model, num_models, variables, standard_vars_idx, modes, path_data_processed_pkl, data_name, method_name, suffix=suffix)
                      m.preprocess(path_data_raw_pkl)
@@ -151,7 +154,8 @@ if __name__ == "__main__":
                             m.pickle_model(path_model_pickle)
               
               if OUTPUT_PLOTS is True:
-                     run_dir = 'ldn_models/model15_7000'
+                     ## TODO: implement training code for XGBoost
+                     # run_dir = 'ldn_models/model15_7000'
                      # run_dir = 'sgp_models/model21'
                      plt.rcParams.update({'font.size': 24})
                      #currency = "£"

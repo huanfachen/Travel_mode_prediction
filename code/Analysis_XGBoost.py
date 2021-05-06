@@ -11,7 +11,7 @@ import pickle
 import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 
-class Analysis_Tree_Models:
+class Analysis_XGBoost:
     """
     Reading in the tree_based model (e.g. RF, XGBoost) (in pickle format) and calculating the economic metrics
     """
