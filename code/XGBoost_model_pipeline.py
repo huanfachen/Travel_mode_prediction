@@ -21,7 +21,8 @@ import pickle
 import tensorflow as tf
 import sys
 import os
-from dnn import FeedForward_DNN
+# from dnn import FeedForward_DNN
+from XGBoost_Model import XGBoost_Model
 
 if __name__ == "__main__":
        print("This is the main function...")
@@ -80,6 +81,7 @@ if __name__ == "__main__":
               # raw_data_dir =  'data/london/london_processed_raw.pkl'
               suffix = ''
 
+              # number of alternative modes
               num_alt = len(modes)
               INCLUDE_VAL_SET = False
               INCLUDE_RAW_SET = True
@@ -130,15 +132,16 @@ if __name__ == "__main__":
                             ## TODO: implement training code for XGBoost
                             
                             model_tf_file_name = "{}_{}_model_{}".format(data_name, method_name, str(i))
-                            F_DNN = FeedForward_DNN(num_alt,model_tf_file_name,INCLUDE_VAL_SET,INCLUDE_RAW_SET, dir_model)
-                            F_DNN.load_data(input_data, input_data_raw, num_training_samples)
-                            F_DNN.init_hyperparameter_space() # could change the hyperparameter here by using F_DNN.change_hyperparameter(new)
+                            # F_DNN = FeedForward_DNN(num_alt,model_tf_file_name,INCLUDE_VAL_SET,INCLUDE_RAW_SET, dir_model)
+                            xgb = XGBoost_Model(num_alt,model_tf_file_name,INCLUDE_VAL_SET,INCLUDE_RAW_SET, dir_model)
+                            xgb.load_data(input_data, input_data_raw, num_training_samples)
+                            xgb.init_hyperparameter_space() # could change the hyperparameter here by using F_DNN.change_hyperparameter(new)
                             # with rand as False, F_DNN will use the optimal parameter obtained from the hyperparameter tuning. See dnn.py
-                            F_DNN.init_hyperparameter(rand=False) # could change the hyperparameter here by using F_DNN.change_hyperparameter(new)                     
-                            F_DNN.bootstrap_data(N_bootstrap_sample=len(input_data['X_train']))
-                            F_DNN.build_model()
+                            xgb.init_hyperparameter(rand=False) # could change the hyperparameter here by using F_DNN.change_hyperparameter(new)                     
+                            xgb.bootstrap_data(N_bootstrap_sample=len(input_data['X_train']))
+                            xgb.build_model()
                             # train and save the model
-                            F_DNN.train_model()
+                            xgb.train_model()
               
               if ANALYSIS_MODEL is True:
                      ## TODO: implement training code for XGBoost
@@ -155,6 +158,7 @@ if __name__ == "__main__":
               
               if OUTPUT_PLOTS is True:
                      ## TODO: implement training code for XGBoost
+
                      # run_dir = 'ldn_models/model15_7000'
                      # run_dir = 'sgp_models/model21'
                      plt.rcParams.update({'font.size': 24})

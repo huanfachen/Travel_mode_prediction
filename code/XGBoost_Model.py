@@ -12,6 +12,7 @@ import matplotlib.pyplot as plt
 import xgboost 
 import copy
 import os
+import pickle as pkl
 
 class XGBoost_Model:
     def __init__(self,K,MODEL_NAME,INCLUDE_VAL_SET,INCLUDE_RAW_SET, RUN_DIR):
@@ -21,6 +22,7 @@ class XGBoost_Model:
         self.INCLUDE_VAL_SET = INCLUDE_VAL_SET
         self.INCLUDE_RAW_SET=INCLUDE_RAW_SET
         self.RUN_DIR = RUN_DIR
+        self.FILE_XGBOOST_MODEL = os.path.join(self.RUN_DIR, "{}_{}.pickle".format(MODEL_NAME, "XGBoost"))
 #    MODEL_NAME = 'model'
 #    INCLUDE_VAL_SET = False
 #    input_file="data/SGP_SP.pickle"
@@ -42,22 +44,22 @@ class XGBoost_Model:
         # h stands for hyperparameter
         self.h = {}
         if rand:
-            self.h['M']=np.random.choice(self.hs['M_list'])
-            self.h['n_hidden']=np.random.choice(self.hs['n_hidden_list'])
-            self.h['l1_const']=np.random.choice(self.hs['l1_const_list'])
-            self.h['l2_const']=np.random.choice(self.hs['l2_const_list'])
-            self.h['dropout_rate']=np.random.choice(self.hs['dropout_rate_list'])
+            self.h['max_depth']=np.random.choice(self.hs['max_depth'])
+            self.h['gamma']=np.random.choice(self.hs['gamma'])
+            self.h['min_child_weight']=np.random.choice(self.hs['min_child_weight'])
+            self.h['eta']=np.random.choice(self.hs['eta'])
+            self.h['n_estimators']=np.random.choice(self.hs['n_estimators'])
         else:
             # using the optimal hyperparameter
-            self.h['M']=6
-            self.h['n_hidden']=200
-            self.h['l1_const']=1e-5#1e-10#1e-20
-            self.h['l2_const']=0.001#0.001#1e-10
-            self.h['dropout_rate']=0.01#1e-5
-        self.h['batch_normalization']=True
-        self.h['learning_rate']=1e-3
-        self.h['n_iteration']=5000
-        self.h['n_mini_batch']=200
+            self.h['max_depth']=10
+            self.h['gamma']=0.5580
+            self.h['min_child_weight']=1
+            self.h['eta']=0.0087
+            self.h['n_estimators']=300
+        # self.h['batch_normalization']=True
+        # self.h['learning_rate']=1e-3
+        # self.h['n_iteration']=5000
+        # self.h['n_mini_batch']=200
 
     def change_hyperparameter(self, new_hyperparameter):
         assert bool(self.h) == True
@@ -66,20 +68,18 @@ class XGBoost_Model:
     def init_hyperparameter_space(self):
         # hs stands for hyperparameter_space
         self.hs = {}
-        # depth, aka number of hidden layers
-        self.hs['M_list'] = [1,2,3,4,5,6,7,8,9,10]
-        # width, aka number of neuros each hidden layer
-        self.hs['n_hidden_list'] = [25, 50, 100, 150, 200] # 6
-        # L1 penalty constants
-        self.hs['l1_const_list'] = [0.1, 1e-2, 1e-3, 1e-5, 1e-10, 1e-20]# 8
-        # L2 penalty constants
-        self.hs['l2_const_list'] = [0.1, 1e-2, 1e-3, 1e-5, 1e-10, 1e-20]# 8
-        self.hs['dropout_rate_list'] = [1e-2, 1e-5] # 5
-        self.hs['batch_normalization_list'] = [True, False] # 2
-        self.hs['learning_rate_list'] = [0.01, 1e-3, 1e-4, 1e-5] # 5
-        self.hs['n_iteration_list'] = [500, 1000, 5000, 10000] # 5
-        self.hs['n_mini_batch_list'] = [50, 100, 200, 500] # 5        
-    
+        
+        # maximum depth of the individual regression estimators        
+        self.hs['max_depth']=[1,2,3,4,5,6,7,8,9,10,11] 
+        # aka min_split_loss, minimum loss reduction required to make a further partition on a leaf node of the tree
+        self.hs['gamma']=[0.05, 0.1, 0.15, 0.20, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5]
+        # Minimum child weight. The larger min_child_weight, the less likely to overfit
+        self.hs['min_child_weight']=[1,2,3,4,5,6,7,8,9,10,11]
+        # 
+        self.hs['eta']=[0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]
+        # number of trees
+        self.hs['n_estimators']=[100, 150, 200, 250, 300]
+
     def random_sample_hyperparameter(self):
         assert bool(self.hs) == True
         assert bool(self.h) == True
@@ -137,7 +137,7 @@ class XGBoost_Model:
 
     def bootstrap_data(self, N_bootstrap_sample):
         """
-        This function samples from training set with replacement.
+        This function samples from training set with replacement. Boostrap will not change the data distribution.
         """
         print("Bootstrap ", N_bootstrap_sample, " samples from training set...")
         self.N_bootstrap_sample = N_bootstrap_sample
@@ -153,68 +153,48 @@ class XGBoost_Model:
     #     self.hidden = tf.layers.dropout(inputs = self.hidden, rate = self.h['dropout_rate'])
 
     def build_model(self):
-        with self.graph.as_default():
-            self.X = tf.placeholder(dtype = tf.float32, shape = (None, self.D), name = 'X')
-            self.Y = tf.placeholder(dtype = tf.int64, shape = (None), name = 'Y')
-            self.hidden = self.X
-            
-            for i in range(self.h['M']):
-                name = 'hidden'+str(i)
-                self.standard_hidden_layer(name)
-            # last layer: utility in choice models
-            self.output=tf.layers.dense(self.hidden, self.K, name = 'output')
-            self.prob=tf.nn.softmax(self.output, name = 'prob')
-            self.output_tensor = tf.identity(self.output, name='logits')
-
-            l1_l2_regularization = tf.contrib.layers.l1_l2_regularizer(scale_l1=self.h['l1_const'], scale_l2=self.h['l2_const'], scope=None)
-            vars_ = tf.trainable_variables()
-            # weights = [var_ for var_ in vars_ if 'kernel' in var_.name]
-            regularization_penalty = tf.contrib.layers.apply_regularization(l1_l2_regularization, vars_)
-            
-            # loss function
-            self.cost = tf.reduce_mean(tf.nn.sparse_softmax_cross_entropy_with_logits(logits = self.output, labels = self.Y), name = 'cost')
-            self.cost += regularization_penalty # add l1 and l2 loss
-            # evaluate
-            correct = tf.nn.in_top_k(self.output, self.Y, 1)
-            self.accuracy = tf.reduce_mean(tf.cast(correct, 'float'))
-            
-            # 
-            self.optimizer = tf.train.AdamOptimizer(learning_rate = self.h['learning_rate']) # opt objective
-            self.training_op = self.optimizer.minimize(self.cost) # minimize the opt objective
-            self.init = tf.global_variables_initializer()  
-            self.saver= tf.train.Saver()
+        self.xgb_clf = xgboost.XGBClassifier(max_depth = self.h['max_depth'],
+        gamma=self.h['gamma'],
+        min_child_weight=self.h['min_child_weight'],
+        eta=self.h['eta'],
+        n_estimators=self.h['n_estimators'])
                         
     def train_model(self):
         """Train and save the model
-        """        
-        with tf.Session(graph=self.graph) as sess:
-            self.init.run()
-            for i in range(self.h['n_iteration']):
-                if i%500==0:
-                    print("Iteration ", i, "Cost = ", self.cost.eval(feed_dict = {self.X: self.X_train_, self.Y: self.Y_train_}))
-                # gradient descent
-                self.obtain_mini_batch()
-                sess.run(self.training_op, feed_dict = {self.X: self.X_batch, self.Y: self.Y_batch})
-            
-            ## compute accuracy and loss
-            self.accuracy_train = self.accuracy.eval(feed_dict = {self.X: self.X_train_, self.Y: self.Y_train_})
-            self.accuracy_test = sess.run(self.accuracy, feed_dict = {self.X: self.X_test, self.Y: self.Y_test})
-            self.loss_train = self.cost.eval(feed_dict = {self.X: self.X_train_, self.Y: self.Y_train_})
-            self.loss_test = self.cost.eval(feed_dict = {self.X: self.X_test, self.Y: self.Y_test})
-            if self.INCLUDE_VAL_SET:
-                self.accuracy_val = self.accuracy.eval(feed_dict = {self.X: self.X_val, self.Y: self.Y_val})
-                self.loss_val = self.cost.eval(feed_dict = {self.X: self.X_val, self.Y: self.Y_val})
+        """
+        self.xgb_clf.fit(self.X_train, self.y_train)
+        # dump
+        with open(self.FILE_XGBOOST_MODEL, 'wb') as f:
+              pkl.dump(self.xgb_clf, f)
 
-            ## compute util and prob
-            self.util_train=self.output.eval(feed_dict={self.X: self.X_train, self.Y: self.Y_train})
-            self.util_test=self.output.eval(feed_dict={self.X: self.X_test, self.Y: self.Y_test})
-            self.prob_train=self.prob.eval(feed_dict={self.X: self.X_train, self.Y: self.Y_train})
-            self.prob_test=self.prob.eval(feed_dict={self.X: self.X_test, self.Y: self.Y_test})
-            if self.INCLUDE_VAL_SET:
-                self.util_val=self.output.eval(feed_dict={self.X: self.X_val, self.Y: self.Y_val})
-                self.prob_val=self.prob.eval(feed_dict={self.X: self.X_val, self.Y: self.Y_val})
-            ## save
-            self.saver.save(sess, os.path.join(self.RUN_DIR, self.MODEL_NAME+".ckpt"))
+        # with tf.Session(graph=self.graph) as sess:
+        #     self.init.run()
+        #     for i in range(self.h['n_iteration']):
+        #         if i%500==0:
+        #             print("Iteration ", i, "Cost = ", self.cost.eval(feed_dict = {self.X: self.X_train_, self.Y: self.Y_train_}))
+        #         # gradient descent
+        #         self.obtain_mini_batch()
+        #         sess.run(self.training_op, feed_dict = {self.X: self.X_batch, self.Y: self.Y_batch})
+            
+        #     ## compute accuracy and loss
+        #     self.accuracy_train = self.accuracy.eval(feed_dict = {self.X: self.X_train_, self.Y: self.Y_train_})
+        #     self.accuracy_test = sess.run(self.accuracy, feed_dict = {self.X: self.X_test, self.Y: self.Y_test})
+        #     self.loss_train = self.cost.eval(feed_dict = {self.X: self.X_train_, self.Y: self.Y_train_})
+        #     self.loss_test = self.cost.eval(feed_dict = {self.X: self.X_test, self.Y: self.Y_test})
+        #     if self.INCLUDE_VAL_SET:
+        #         self.accuracy_val = self.accuracy.eval(feed_dict = {self.X: self.X_val, self.Y: self.Y_val})
+        #         self.loss_val = self.cost.eval(feed_dict = {self.X: self.X_val, self.Y: self.Y_val})
+
+        #     ## compute util and prob
+        #     self.util_train=self.output.eval(feed_dict={self.X: self.X_train, self.Y: self.Y_train})
+        #     self.util_test=self.output.eval(feed_dict={self.X: self.X_test, self.Y: self.Y_test})
+        #     self.prob_train=self.prob.eval(feed_dict={self.X: self.X_train, self.Y: self.Y_train})
+        #     self.prob_test=self.prob.eval(feed_dict={self.X: self.X_test, self.Y: self.Y_test})
+        #     if self.INCLUDE_VAL_SET:
+        #         self.util_val=self.output.eval(feed_dict={self.X: self.X_val, self.Y: self.Y_val})
+        #         self.prob_val=self.prob.eval(feed_dict={self.X: self.X_val, self.Y: self.Y_val})
+        #     ## save
+        #     self.saver.save(sess, os.path.join(self.RUN_DIR, self.MODEL_NAME+".ckpt"))
 
     def init_simul_data(self):
         self.simul_data_dic = {}
@@ -251,15 +231,15 @@ class XGBoost_Model:
         x_delta_data[:, target_x_index] = x_delta_data[:, target_x_index] + x_delta # add delta to the X_train dataset in x_col_name column
         self.x_delta_data_dic[x_col_name]=x_delta_data
         
-    def compute_x_delta_data(self):
-        with tf.Session(graph=self.graph) as sess:
-            self.saver.restore(sess, "tmp/"+self.MODEL_NAME+".ckpt")
-            # compute util and prob
-            self.util_x_delta_dic={}
-            self.prob_x_delta_dic={}
-            for name_ in self.x_delta_data_dic.keys():
-                self.util_x_delta_dic[name_]=self.output.eval(feed_dict={self.X:self.x_delta_data_dic[name_]})
-                self.prob_x_delta_dic[name_]=self.prob.eval(feed_dict={self.X:self.x_delta_data_dic[name_]})
+    # def compute_x_delta_data(self):
+    #     with tf.Session(graph=self.graph) as sess:
+    #         self.saver.restore(sess, "tmp/"+self.MODEL_NAME+".ckpt")
+    #         # compute util and prob
+    #         self.util_x_delta_dic={}
+    #         self.prob_x_delta_dic={}
+    #         for name_ in self.x_delta_data_dic.keys():
+    #             self.util_x_delta_dic[name_]=self.output.eval(feed_dict={self.X:self.x_delta_data_dic[name_]})
+    #             self.prob_x_delta_dic[name_]=self.prob.eval(feed_dict={self.X:self.x_delta_data_dic[name_]})
                             
     def visualize_choice_prob_function(self, x_col_name, color_list, label_list, xlabel, ylabel):
         assert len(color_list)==self.K
