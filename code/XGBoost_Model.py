@@ -15,14 +15,13 @@ import os
 import pickle as pkl
 
 class XGBoost_Model:
-    def __init__(self,K,MODEL_NAME,INCLUDE_VAL_SET,INCLUDE_RAW_SET, RUN_DIR):
-        self.graph = tf.Graph()
-        self.K = K
+    def __init__(self,num_alt,MODEL_NAME,INCLUDE_VAL_SET,INCLUDE_RAW_SET, RUN_DIR):
+        self.num_alt = num_alt
         self.MODEL_NAME = MODEL_NAME
         self.INCLUDE_VAL_SET = INCLUDE_VAL_SET
         self.INCLUDE_RAW_SET=INCLUDE_RAW_SET
         self.RUN_DIR = RUN_DIR
-        self.FILE_XGBOOST_MODEL = os.path.join(self.RUN_DIR, "{}_{}.pickle".format(MODEL_NAME, "XGBoost"))
+        self.FILE_XGBOOST_MODEL = os.path.join(self.RUN_DIR, "{}.pkl".format(MODEL_NAME))
 #    MODEL_NAME = 'model'
 #    INCLUDE_VAL_SET = False
 #    input_file="data/SGP_SP.pickle"
@@ -162,7 +161,7 @@ class XGBoost_Model:
     def train_model(self):
         """Train and save the model
         """
-        self.xgb_clf.fit(self.X_train, self.y_train)
+        self.xgb_clf.fit(self.X_train, self.Y_train)
         # dump
         with open(self.FILE_XGBOOST_MODEL, 'wb') as f:
               pkl.dump(self.xgb_clf, f)
@@ -242,8 +241,8 @@ class XGBoost_Model:
     #             self.prob_x_delta_dic[name_]=self.prob.eval(feed_dict={self.X:self.x_delta_data_dic[name_]})
                             
     def visualize_choice_prob_function(self, x_col_name, color_list, label_list, xlabel, ylabel):
-        assert len(color_list)==self.K
-        assert len(label_list)==self.K
+        assert len(color_list)==self.num_alt
+        assert len(label_list)==self.num_alt
         # targeting x index.
         target_x_index = self.colnames.index(x_col_name)
 

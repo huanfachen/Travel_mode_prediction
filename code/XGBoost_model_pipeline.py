@@ -30,11 +30,11 @@ if __name__ == "__main__":
        # if PROCESS_RAW_DATA is True, the original data (.csv) will be processed and saved as two .pkl files. Otherwise, the processed files will be used (you need to guarantee that the .pkl files have be generated)
        PROCESS_RAW_DATA = False
        # if RETRAIN_MODEL is True, DNN models will be retrained and saved as tf and .pkl files. Otherwise, the following steps will use the files saved from previous trainings.
-       RETRAIN_MODEL = False
+       RETRAIN_MODEL = True
        # if ANALYSIS_MODEL is True, the DNN models will be analysed. Otherwise, the result files saved from previous analysis will be used for plotting
-       ANALYSIS_MODEL = True
+       ANALYSIS_MODEL = False
        # if OUTPUT_FILES is True, the trained DNN models will be analysed and .csv files will be saved. It is ignored if ANALYSIS_MODEL is False
-       OUTPUT_FILES = True
+       OUTPUT_FILES = False
        # if OUTPUT_PLOTS is True, the trained DNN models will be analysed and plots will be saved
        OUTPUT_PLOTS = False
 
@@ -48,7 +48,7 @@ if __name__ == "__main__":
 
        # list of dataset and method names. Should have the same length
        list_data_name = ['Original']
-       list_method_name = ['dnn']
+       list_method_name = ['xgb']
        for data_name, method_name in zip(list_data_name, list_method_name):
               # variables in London Dataset
               variables = ['age', 'male', 'driving_license',
