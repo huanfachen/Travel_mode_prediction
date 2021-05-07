@@ -115,27 +115,28 @@ class Analysis_Neural_Net:
             self.list_model_file.append(model_file)
 
     def compute_prob_curve(self, x, input_x, var, prob, sess):
-        """Computing the probability curve
+        """Computing the probability and probability derivative
         Args:
-            x ([type]): [description]
-            input_x ([type]): [description]
-            var ([type]): [description]
-            prob ([type]): [description]
-            sess ([type]): [description]
+            x (Tensor): the names of the tensors in the input layer
+            input_x (pd.DataFrame): data frame of X_train
+            var (list of str): names of continous variables
+            prob (Tensor): the names of the tensors in the output layer
+            sess (Tf session): tf session
 
         Returns:
-            [type]: [description]
+            [choice_prob, prob_derivative]: two np arrays representing the choice probability and probibility derivative
         """        
         input_x = np.array(input_x)
         x_avg = np.mean(input_x, axis=0)
         # len(input_x) returns the number of rows of input_x
         # np.size(input_x, axis=1) returns the number of columns in input_x.
-        # x_feed would have identical rows, with each row being the row average of input_x
+        # x_feed would have identical rows, with each row representing the row average of input_x
         x_feed = np.repeat(x_avg, len(input_x)).reshape(len(input_x), np.size(input_x, axis=1), order='F')
         choice_prob = []
         prob_derivative = []
 
         for idx in var:
+            # replace the value of 'idx' column with actual value of input_x
             x_feed[:, idx] = input_x[:, idx]
             temp = sess.run(prob, feed_dict={x: x_feed})
             choice_prob.append(np.array(temp).T)
@@ -188,7 +189,7 @@ class Analysis_Neural_Net:
 
             # x denotes the names of the tensors in the first neural layer
             x = graph.get_tensor_by_name("X:0")
-            # x denotes the names of the tensors in the output layer
+            # prob denotes the names of the tensors in the output layer
             prob = graph.get_tensor_by_name("prob:0")
             prob_train = sess.run(prob, feed_dict={x: self.input_data['X_train']})
             prob_test = sess.run(prob, feed_dict={x: self.input_data['X_test']})

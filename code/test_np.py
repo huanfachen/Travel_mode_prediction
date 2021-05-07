@@ -30,4 +30,6 @@ if __name__ == '__main__':
     print(avg_df)
     print(pd.DataFrame(avg_df, index = temp_df.index, columns = temp_df.columns))
     print(pd.DataFrame(temp_df, index = temp_df.index, columns = temp_df.columns))
+
+    print(np.ptp(y_true))
     
