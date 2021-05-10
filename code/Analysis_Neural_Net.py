@@ -124,7 +124,7 @@ class Analysis_Neural_Net:
             sess (Tf session): tf session
 
         Returns:
-            [choice_prob, prob_derivative]: two np arrays representing the choice probability and probibility derivative
+            [choice_prob, prob_derivative]: two np arrays representing the choice probability and probibility derivative. The 
         """        
         input_x = np.array(input_x)
         x_avg = np.mean(input_x, axis=0)

@@ -271,14 +271,25 @@ class Plot_Neural_Net:
         ax.set_ylabel('Density')
         fig.savefig('plots/' + self.m.run_dir + '_' + str(modelNumber) + '_vot_drive_train.png', bbox_inches="tight")
 
-    def plot_vot(self, currency):
+    def plot_vot(self, mode = 'drive', currency = '$'):
         """Plotting VOT histogram
 
         Args:
-            currency (str): str of currency. e.g. '$'
-        """        
-        avg_vot = np.mean(self.m.vot_test, axis=1)
+            mode (str): str of mode. 'pt' or 'drive'. Default at 'drive'
+            currency (str): str of currency. e.g. '$'. Default at '$'
+        """
+        # assert mode should be 'pt' or 'drive'
+        assert(mode is 'pt' or mode is 'drive')
+        if mode is 'pt':
+            # avg_vot = np.nanmean(self.m.vot_pt_test, axis=1)
+            avg_vot = np.ma.masked_invalid(self.m.vot_pt_test).mean(axis=1)
+        else:
+            avg_vot = np.ma.masked_invalid(self.m.vot_drive_test).mean(axis=1)
+            # avg_vot = np.nanmean(self.m.vot_drive_test, axis=1)
+
+        # avg_vot = np.mean(self.m.vot_test, axis=1)
         print('VOT: ', avg_vot)
+        # exclude nan values in avg
         avg_vot = avg_vot[~np.isnan(avg_vot)]
         print('Dropped ', self.m.numModels - len(avg_vot), ' Models.')
         print('Mean VOT test:', np.mean(avg_vot))
@@ -290,9 +301,10 @@ class Plot_Neural_Net:
         ax.hist(avg_vot, bins=bins, density=True, color='b')
         ax.set_xlim([np.percentile(avg_vot, 5), np.percentile(avg_vot, 95)])
         #ax.set_xlim([-200, 200])
-        ax.set_xlabel("Value of Time (Drive) ("+currency+"/h)")
+        # ax.set_xlabel("Value of Time (Drive) ("+currency+"/h)")
+        ax.set_xlabel("Value of Time ({}) ({})/h)".format(mode, currency))
         ax.set_ylabel('Density')
-        self.save_plot(fig, 'vot_hist')
+        self.save_plot(fig, '{}_vot_hist'.format(mode))
 
         # avg_vot_train = np.mean(self.m.vot_train, axis=1)
         # avg_vot_train = avg_vot_train[~np.isnan(avg_vot_train)]

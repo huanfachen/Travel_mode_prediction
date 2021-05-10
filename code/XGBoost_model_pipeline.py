@@ -11,7 +11,8 @@ You can run only some steps
 
 # from analysis import Analysis
 # from typing_extensions import TypeVarTuple
-from Analysis_Neural_Net import Analysis_Neural_Net
+# from Analysis_Neural_Net import Analysis_Neural_Net
+from Analysis_XGBoost import Analysis_XGBoost
 from Plot_Neural_Net import Plot_Neural_Net
 from Preprocess_data_DNN import Preprocess_data_DNN
 import matplotlib.pyplot as plt
@@ -30,13 +31,13 @@ if __name__ == "__main__":
        # if PROCESS_RAW_DATA is True, the original data (.csv) will be processed and saved as two .pkl files. Otherwise, the processed files will be used (you need to guarantee that the .pkl files have be generated)
        PROCESS_RAW_DATA = False
        # if RETRAIN_MODEL is True, DNN models will be retrained and saved as tf and .pkl files. Otherwise, the following steps will use the files saved from previous trainings.
-       RETRAIN_MODEL = True
+       RETRAIN_MODEL = False
        # if ANALYSIS_MODEL is True, the DNN models will be analysed. Otherwise, the result files saved from previous analysis will be used for plotting
-       ANALYSIS_MODEL = False
+       ANALYSIS_MODEL = True
        # if OUTPUT_FILES is True, the trained DNN models will be analysed and .csv files will be saved. It is ignored if ANALYSIS_MODEL is False
-       OUTPUT_FILES = False
+       OUTPUT_FILES = True
        # if OUTPUT_PLOTS is True, the trained DNN models will be analysed and plots will be saved
-       OUTPUT_PLOTS = False
+       OUTPUT_PLOTS = True
 
        # if True, use the designated testing data. Otherwise, use [Data]_X_Test.csv and [Data]_Y_Test.csv
        DESIGNATED_TEST_DATA = True
@@ -44,20 +45,20 @@ if __name__ == "__main__":
        file_Y_test = 'Original_Y_Test.csv'
 
        ## number of models. For quick testing, you can set num_models = 1
-       num_models = 3
+       num_models = 5
 
        # list of dataset and method names. Should have the same length
        list_data_name = ['Original']
        list_method_name = ['xgb']
        for data_name, method_name in zip(list_data_name, list_method_name):
-              # variables in London Dataset
+              # variables in London Dataset (14 vars)
               variables = ['age', 'male', 'driving_license',
                      'car_ownership', 'distance', 'dur_walking', 'dur_cycling',
                      'dur_pt_access', 'dur_pt_inv', 'dur_pt_int_total',
                      'pt_n_interchanges', 'dur_driving', 'cost_transit',
                      'cost_driving_total']
 
-              # standard_vars stands for continuous variables 
+              # standard_vars stands for continuous variables  (11 vars)
               standard_vars = ['age', 'distance', 'dur_walking', 'dur_cycling',
                      'dur_pt_access', 'dur_pt_inv', 'dur_pt_int_total',
                      'pt_n_interchanges', 'dur_driving', 'cost_transit',
@@ -146,7 +147,7 @@ if __name__ == "__main__":
               if ANALYSIS_MODEL is True:
                      ## TODO: implement training code for XGBoost
                      # why is raw_data_dir necessary here?
-                     m = Analysis_Neural_Net(dir_model, num_models, variables, standard_vars_idx, modes, path_data_processed_pkl, data_name, method_name, suffix=suffix)
+                     m = Analysis_XGBoost(dir_model, num_models, variables, standard_vars_idx, modes, path_data_processed_pkl, data_name, method_name, suffix=suffix)
                      m.preprocess(path_data_raw_pkl)
                      m.load_models_and_calculate(mkt=True, disagg=True, social_welfare=True,drive_time_idx=drive_time_idx, drive_cost_idx=drive_cost_idx, drive_cost_idx_standard=drive_cost_idx_standard, \
                                                  drive_time_name='dur_driving', drive_cost_name='cost_driving_total', drive_idx=drive_mode_idx, \
@@ -181,7 +182,8 @@ if __name__ == "__main__":
 
                      assert len(plot_variables) == len(plot_vars) == len(plot_vars_standard) == len(plot_modes)
                      plot_NN = Plot_Neural_Net(path_model_pickle, dir_plots, data_name, method_name)
-                     plot_NN.plot_vot(currency)
+                     plot_NN.plot_vot('drive', currency)
+                     plot_NN.plot_vot('pt', currency)
                      
                      plot_NN.plot_choice_prob(plot_modes, plot_vars, plot_vars_standard, plot_variables)
                      plot_NN.plot_prob_derivative(plot_modes, plot_vars, plot_vars_standard, plot_variables)#, [86,17,31], ['C1: 0.602', 'C2: 0.595', 'C3: 0.586'])

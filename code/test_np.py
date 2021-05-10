@@ -1,6 +1,8 @@
 import numpy as np
 import pandas as pd
 from sklearn.metrics import classification_report
+import random
+import datetime
 
 if __name__ == '__main__':
     # to calculate the mean of a list of arrays (of the same shape)
@@ -32,4 +34,24 @@ if __name__ == '__main__':
     print(pd.DataFrame(temp_df, index = temp_df.index, columns = temp_df.columns))
 
     print(np.ptp(y_true))
+
+    mode = 'pt'
+    assert(mode is 'pt' or mode is 'drive')
+
+    # test the mean of an array containing nan and inf
+    a = np.array([[-np.inf, np.nan, -np.inf], [np.inf, 4, 3]])
+    print(a)
+    print("result of np.mean")
+    print(np.mean(a, axis = 0))
+    # will get np.nan
+    print("result of np.nanmean")
+    print(np.nanmean(a, axis = 0))
+    # will get np.nan
+    print("result of np.ma.masked_invalid")
+    print(np.ma.masked_invalid(a).mean(axis=0))
+    # won't get np.nan
+    
+    # test random seed
+    print(random.seed(datetime.datetime.now()))
+    print(random.seed(datetime.datetime.now()))
     

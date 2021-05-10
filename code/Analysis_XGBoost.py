@@ -14,7 +14,7 @@ import os
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report
 import xgboost
 
-class Analysis_Neural_Net:
+class Analysis_XGBoost:
     """
     Reading in the XGBoost model (in pickle format) and calculating relevant economic metrics
     """
@@ -113,47 +113,69 @@ class Analysis_Neural_Net:
 
             self.list_model_file.append(model_file)
 
-    def compute_prob_curve(self, input_x, var, xgb_model):
-        """Computing the probability and probability derivative
+    def compute_XGBoost_gradients(self, input_x, vars, xgb_model):
+        """Computing the probability derivative of the var
 
         Args:
             input_x (pd.DataFrame): data frame of X_train
-            var ([type]): [description]
-            xgb_model ([type]): [description]
+            vars (list of str): names of variables
+            xgb_model (XGBoost classifier): a model of XGBoost classifier
 
         Returns:
-            [type]: [description]
+            prob_derivative: an array of the shape (num_var, num_alt, num_instance)
         """        
-        """Computing the probability curve
+        input_x = np.array(input_x)
+        prob_derivative = []
+        temp_prob = xgb_model.predict_proba(input_x)
+        for var in vars:
+            # get the idx of var in all_variables
+            idx = self.all_variables.index(var)
+            increment = np.ptp(input_x[:, idx]) / 10
+            if increment <= 0:
+                increment = 1e-3
+            # increase x_feed by increment
+            input_x[:, idx] = input_x[:, idx] + increment
+            new_prob = xgb_model.predict_proba(input_x)
+            gradient = (new_prob - temp_prob) / increment
+            prob_derivative.append(np.array(gradient).T)
+            # restore input_x
+            input_x[:, idx] = input_x[:, idx] - increment
+        return np.array(prob_derivative)
+
+    def compute_prob_curve(self, input_x, vars, xgb_model):
+        """Computing the probability and probability derivative using a market average person
+
         Args:
-            x ([type]): [description]
-            input_x ([type]): [description]
-            var ([type]): [description]
-            prob ([type]): [description]
-            sess ([type]): [description]
+            input_x (pd.DataFrame): data frame of X_train
+            vars (list of str): names of continous variables (Not index)
+            xgb_model (XGBoost classifier): a model of XGBoost classifier
 
         Returns:
-            [type]: [description]
+            [choice_prob, prob_derivative]: two np arrays representing the choice probability and probibility derivative. Both in the shape of (num_var, num_alt, num_instance)
         """        
         input_x = np.array(input_x)
         x_avg = np.mean(input_x, axis=0)
         x_feed = np.repeat(x_avg, len(input_x)).reshape(len(input_x), np.size(input_x, axis=1), order='F')
         choice_prob = []
         prob_derivative = []
-        for idx in var:
+        for var in vars:
+            # get the idx of var in all_variables
+            idx = self.all_variables.index(var)
             x_feed[:, idx] = input_x[:, idx]
             # compute probability
             temp_prob = xgb_model.predict_proba(x_feed)
             choice_prob.append(np.array(temp_prob).T)
             # compute gradient
-            # need to decide the increment. 
-            increment = np.ptp(x_feed[:, idx]) / 30
+            # deciding the interval. Should be greater than zero.
+            # If the interval is too small, the probability change is insignificant. Tree-based models are insensitive to very small changes in feature values 
+            increment = np.ptp(x_feed[:, idx]) / 10
             if increment <= 0:
                 increment = 1e-3
+            # increase x_feed by increment
             x_feed[:, idx] = x_feed[:, idx] + increment
             new_prob = xgb_model.predict_proba(x_feed)
             gradient = (new_prob - temp_prob) / increment
-            prob_derivative.append(np.array(gradient))
+            prob_derivative.append(np.array(gradient).T)
             # restore x_feed to x_avg
             x_feed[:, idx] = x_avg[idx]
         return np.array(choice_prob), np.array(prob_derivative)
@@ -209,74 +231,35 @@ class Analysis_Neural_Net:
         
         for index in range(self.numModels):
             # load pickle file
-            xgb_model = pickle.load(self.list_model_file[index])
+            with open(self.list_model_file[index], 'rb') as f:
+                xgb_model = pickle.load(f)
+            # xgb_model = pickle.load(self.list_model_file[index])
             # calculate prob_test and prediction_test
             # return: a numpy array of shape array-like of shape (n_samples, n_classes) with the probability of each data example being of a given class.
-            prob_test = xgb_model.predict_proba(self.input_data['X_test'], validate_features = True)
-            predict_test = xgb_model.predict(self.input_data['X_test'], validate_features = True)
+            prob_test = xgb_model.predict_proba(self.input_data['X_test'], validate_features = False)
+            predict_test = xgb_model.predict(self.input_data['X_test'], validate_features = False)
             self.predict_test.append(predict_test)
-            # calculate gradient
-
-            tf.reset_default_graph()
-
-            # load the model files (.ckpt.meta) from run_dir. These files should be specified and loaded in the __init__() function.
-            sess = tf.InteractiveSession()
-            saver = tf.train.import_meta_graph(self.list_meta_graph_file[index])
-            saver.restore(sess, self.list_model_file[index])
-
-            graph = tf.get_default_graph()
-
-            # x denotes the names of the tensors in the first neural layer
-            x = graph.get_tensor_by_name("X:0")
-            # x denotes the names of the tensors in the output layer
-            prob = graph.get_tensor_by_name("prob:0")
-            prob_train = sess.run(prob, feed_dict={x: self.input_data['X_train']})
-            prob_test = sess.run(prob, feed_dict={x: self.input_data['X_test']})
-
-            predict = tf.argmax(prob, axis=1)
-            # the prediction of the testing data
-            predict_test = sess.run(predict, feed_dict={x:self.input_data['X_test']})
-
-            # append the prediction of the testing data to self.predict_test
-            self.predict_test.append(predict_test)
-
-            utility = graph.get_tensor_by_name("logits:0")
 
             # market share
-            self.mkt_share_train[index, :] = np.sum(prob_train, axis = 0) / self.numIndTrn
+            # self.mkt_share_train[index, :] = np.sum(prob_train, axis = 0) / self.numIndTrn
             self.mkt_share_test[index, :] = np.sum(prob_test, axis = 0) /self.numIndTest
-            print(self.mkt_share_train[index, :])
+            # print(self.mkt_share_train[index, :])
 
             if disagg:
                 # Disaggregate Prob Derivative and Elasticity
-                grad = []
+                # grad = []
                 drive_time = drive_time_idx
                 drive_cost = drive_cost_idx
+                # shape of gradients_all_modes: (num_var, num_alt, num_instance)
+                gradients_all_modes = self.compute_XGBoost_gradients(self.input_data['X_test'], self.all_variables, xgb_model)
                 for j in range(len(self.modes)):
-                    grad.append(tf.gradients(prob[:, j], x))
-
-                    # # training data (not necessary to calculate the vot on the training data)
-                    # gradients = sess.run(grad[-1], feed_dict={x: self.input_data['X_train']})[0]
-                    # # (variable, model #, mode, individual #) - elasticity/derivative
-                    # self.prob_derivative[:, index, j, :] = np.array(gradients[:, self.cont_vars]).T
-                    # elas = gradients[:, self.cont_vars] / prob_train[:, j][:, None] * np.array(self.X_train_standard)[:, self.cont_vars] / self.std[None,self.cont_vars]
-                    # self.elasticity[:, index, j, :] = np.array(elas).T
-
-                    # if j == drive_idx: # If drive, then calculate VOT
-                    #     # filter out bad records
-                    #     # print how many observations are filtered out
-                    #     # Value of time : dp/dtime over dp/dcost, correct for normalization as well as units
-                    #     # Take the mean of the trial
-                    #     v = gradients[:, drive_time] / gradients[:, drive_cost] / self.std[None, drive_time] * self.std[None, drive_cost] * time_correction
-                    #     self.vot_train[index,:] = v
-                    #     filt = ~np.isnan(v) & ~np.isinf(v)
-                    #     v = v[filt]
-                    #     print("Model ", index, ": dropped ", self.numIndTrn - len(v), " training observations.")
-                    #     self.filterd_train.append(self.numIndTrn - len(v))
+                    # grad.append(tf.gradients(prob[:, j], x))
 
                     # testing data
-                    gradients = sess.run(grad[-1], feed_dict={x: self.input_data['X_test']})[0]
-                    self.prob_derivative_test[:, index, j, :] = np.array(gradients[:, self.cont_vars]).T
+                    # shape of gradients: (num_instance, num_var)
+                    gradients = gradients_all_modes[:,j,:].T
+                    # shape of prob_derivative_test: (numContVars, self.numModels, self.numAlt, self.numIndTest)
+                    self.prob_derivative_test[:, index, j, :] = np.array(gradients[:,self.cont_vars]).T
                     elas = gradients[:, self.cont_vars] / prob_test[:, j][:, None] * np.array(self.X_test_standard)[:, self.cont_vars] / self.std[None,self.cont_vars]
                     self.elasticity_test[:, index, j, :] = np.array(elas).T
                     
@@ -292,9 +275,9 @@ class Analysis_Neural_Net:
                         print("Model ", index, ": dropped ", self.numIndTest - len(v), " testing observations.")
                         self.filterd_test.append(self.numIndTest - len(v))
 
-                        util_derivative = tf.gradients(utility[:, j], x)
-                        util_derivative_test = sess.run(util_derivative, feed_dict={x: self.input_data['X_test']})[0][:, self.cont_vars]
-                        self.util_derivative_test[:, index, :] = np.array(util_derivative_test).T
+                        # util_derivative = tf.gradients(utility[:, j], x)
+                        # util_derivative_test = sess.run(util_derivative, feed_dict={x: self.input_data['X_test']})[0][:, self.cont_vars]
+                        # self.util_derivative_test[:, index, :] = np.array(util_derivative_test).T
 
                     if j == pt_idx: # If pt, then calculate VOT_pt
                         # filter out bad records
@@ -308,45 +291,161 @@ class Analysis_Neural_Net:
                         print("Model ", index, ": dropped ", self.numIndTest - len(v), " testing observations.")
                         self.filterd_test.append(self.numIndTest - len(v))
 
-                        util_derivative = tf.gradients(utility[:, j], x)
-                        util_derivative_test = sess.run(util_derivative, feed_dict={x: self.input_data['X_test']})[0][:, self.cont_vars]
-                        self.util_derivative_test[:, index, :] = np.array(util_derivative_test).T
+                        # util_derivative = tf.gradients(utility[:, j], x)
+                        # util_derivative_test = sess.run(util_derivative, feed_dict={x: self.input_data['X_test']})[0][:, self.cont_vars]
+                        # self.util_derivative_test[:, index, :] = np.array(util_derivative_test).T
 
             if mkt:
                 # Choice prob and Prob Derivative for market average person
-                choice_prob, prob_derivative = self.compute_prob_curve(x, self.input_data['X_train'], self.cont_vars, prob, sess)
+                # why using X_train??
+                choice_prob, prob_derivative = self.compute_prob_curve(self.input_data['X_train'], self.cont_vars_name, xgb_model)
                 # (variable, model #, mode, individual #) - choice prob
                 self.mkt_prob_derivative[:, index, :, :] = np.array(prob_derivative)
                 self.mkt_choice_prob[:, index, :, :] = np.array(choice_prob)
 
             if social_welfare:
-                utility0 = sess.run(utility, feed_dict={x: self.input_data['X_test']})
-                new_input = self.input_data['X_test'].copy()
-                new_input[drive_cost_name] += 1
-                utility1 = sess.run(utility, feed_dict={x: new_input})
-                # sw_ind is welfare change per person
-                sw_ind.append(np.log(np.sum(np.exp(utility1), axis=1)) - np.log(np.sum(np.exp(utility0), axis=1)))
-            '''
-            fig, ax = plt.subplots(figsize = (12, 12))
-            ax.scatter(self.X_train_raw[:, 11], self.mkt_choice_prob[11, index, 3,:])
-            fig.savefig('plots/test.png')
-            '''
+                None # Not implemented
+                # utility0 = sess.run(utility, feed_dict={x: self.input_data['X_test']})
+                # new_input = self.input_data['X_test'].copy()
+                # new_input[drive_cost_name] += 1
+                # utility1 = sess.run(utility, feed_dict={x: new_input})
+                # # sw_ind is welfare change per person
+                # sw_ind.append(np.log(np.sum(np.exp(utility1), axis=1)) - np.log(np.sum(np.exp(utility0), axis=1)))           
+            # calculate gradient
 
-            sess.close()
+            # delete all below - from DNN
 
-        self.average_cp = np.mean(self.mkt_choice_prob, axis = 1)
-        if social_welfare:
-            j = drive_idx
-            cost_var = drive_cost_idx_standard
-            # welfare
-            self.sw_ind = np.array(sw_ind)
-            # definition of util_derivative_test
-            # self.util_derivative_test = np.zeros((numContVars, self.numModels, self.numIndTest))
-            self.sw_change_0 = sw_ind/self.util_derivative_test[cost_var,:,:] #, axis = 1)
-            self.sw_change_1 = sw_ind/np.mean(self.util_derivative_test[cost_var,:,:], axis=0)[None, :]#, axis = 1)
-            self.sw_change_2 = sw_ind/np.mean(self.util_derivative_test[cost_var,:,:], axis=1)[:, None]#, axis = 1)
-            # sw_change_3 is used here? It is averaged over all iterations
-            self.sw_change_3 = sw_ind/np.mean(self.util_derivative_test[cost_var,:,:])#, axis = 1)
+        #     tf.reset_default_graph()
+
+        #     # load the model files (.ckpt.meta) from run_dir. These files should be specified and loaded in the __init__() function.
+        #     sess = tf.InteractiveSession()
+        #     saver = tf.train.import_meta_graph(self.list_meta_graph_file[index])
+        #     saver.restore(sess, self.list_model_file[index])
+
+        #     graph = tf.get_default_graph()
+
+        #     # x denotes the names of the tensors in the first neural layer
+        #     x = graph.get_tensor_by_name("X:0")
+        #     # x denotes the names of the tensors in the output layer
+        #     prob = graph.get_tensor_by_name("prob:0")
+        #     prob_train = sess.run(prob, feed_dict={x: self.input_data['X_train']})
+        #     prob_test = sess.run(prob, feed_dict={x: self.input_data['X_test']})
+
+        #     predict = tf.argmax(prob, axis=1)
+        #     # the prediction of the testing data
+        #     predict_test = sess.run(predict, feed_dict={x:self.input_data['X_test']})
+
+        #     # append the prediction of the testing data to self.predict_test
+        #     self.predict_test.append(predict_test)
+
+        #     utility = graph.get_tensor_by_name("logits:0")
+
+        #     # market share
+        #     self.mkt_share_train[index, :] = np.sum(prob_train, axis = 0) / self.numIndTrn
+        #     self.mkt_share_test[index, :] = np.sum(prob_test, axis = 0) /self.numIndTest
+        #     print(self.mkt_share_train[index, :])
+
+
+        #     if disagg:
+        #         # Disaggregate Prob Derivative and Elasticity
+        #         grad = []
+        #         drive_time = drive_time_idx
+        #         drive_cost = drive_cost_idx
+        #         for j in range(len(self.modes)):
+        #             grad.append(tf.gradients(prob[:, j], x))
+
+        #             # # training data (not necessary to calculate the vot on the training data)
+        #             # gradients = sess.run(grad[-1], feed_dict={x: self.input_data['X_train']})[0]
+        #             # # (variable, model #, mode, individual #) - elasticity/derivative
+        #             # self.prob_derivative[:, index, j, :] = np.array(gradients[:, self.cont_vars]).T
+        #             # elas = gradients[:, self.cont_vars] / prob_train[:, j][:, None] * np.array(self.X_train_standard)[:, self.cont_vars] / self.std[None,self.cont_vars]
+        #             # self.elasticity[:, index, j, :] = np.array(elas).T
+
+        #             # if j == drive_idx: # If drive, then calculate VOT
+        #             #     # filter out bad records
+        #             #     # print how many observations are filtered out
+        #             #     # Value of time : dp/dtime over dp/dcost, correct for normalization as well as units
+        #             #     # Take the mean of the trial
+        #             #     v = gradients[:, drive_time] / gradients[:, drive_cost] / self.std[None, drive_time] * self.std[None, drive_cost] * time_correction
+        #             #     self.vot_train[index,:] = v
+        #             #     filt = ~np.isnan(v) & ~np.isinf(v)
+        #             #     v = v[filt]
+        #             #     print("Model ", index, ": dropped ", self.numIndTrn - len(v), " training observations.")
+        #             #     self.filterd_train.append(self.numIndTrn - len(v))
+
+        #             # testing data
+        #             gradients = sess.run(grad[-1], feed_dict={x: self.input_data['X_test']})[0]
+        #             self.prob_derivative_test[:, index, j, :] = np.array(gradients[:, self.cont_vars]).T
+        #             elas = gradients[:, self.cont_vars] / prob_test[:, j][:, None] * np.array(self.X_test_standard)[:, self.cont_vars] / self.std[None,self.cont_vars]
+        #             self.elasticity_test[:, index, j, :] = np.array(elas).T
+                    
+        #             if j == drive_idx: # If drive, then calculate VOT_drive
+        #                 # filter out bad records
+        #                 # print how many observations are filtered out
+        #                 # Value of time : dp/dtime over dp/dcost, correct for normalization as well as units
+        #                 # Take the mean of the trial
+        #                 v = gradients[:, drive_time] / gradients[:, drive_cost] / self.std[None, drive_time] * self.std[None, drive_cost] * time_correction
+        #                 self.vot_drive_test[index,:] = v
+        #                 filt = ~np.isnan(v) & ~np.isinf(v)
+        #                 v = v[filt]
+        #                 print("Model ", index, ": dropped ", self.numIndTest - len(v), " testing observations.")
+        #                 self.filterd_test.append(self.numIndTest - len(v))
+
+        #                 util_derivative = tf.gradients(utility[:, j], x)
+        #                 util_derivative_test = sess.run(util_derivative, feed_dict={x: self.input_data['X_test']})[0][:, self.cont_vars]
+        #                 self.util_derivative_test[:, index, :] = np.array(util_derivative_test).T
+
+        #             if j == pt_idx: # If pt, then calculate VOT_pt
+        #                 # filter out bad records
+        #                 # print how many observations are filtered out
+        #                 # Value of time : dp/dtime over dp/dcost, correct for normalization as well as units
+        #                 # Take the mean of the trial
+        #                 v = gradients[:, pt_time_idx] / gradients[:, pt_cost_idx] / self.std[None, pt_time_idx] * self.std[None, pt_cost_idx] * time_correction
+        #                 self.vot_pt_test[index,:] = v
+        #                 filt = ~np.isnan(v) & ~np.isinf(v)
+        #                 v = v[filt]
+        #                 print("Model ", index, ": dropped ", self.numIndTest - len(v), " testing observations.")
+        #                 self.filterd_test.append(self.numIndTest - len(v))
+
+        #                 util_derivative = tf.gradients(utility[:, j], x)
+        #                 util_derivative_test = sess.run(util_derivative, feed_dict={x: self.input_data['X_test']})[0][:, self.cont_vars]
+        #                 self.util_derivative_test[:, index, :] = np.array(util_derivative_test).T
+
+        #     if mkt:
+        #         # Choice prob and Prob Derivative for market average person
+        #         choice_prob, prob_derivative = self.compute_prob_curve(x, self.input_data['X_train'], self.cont_vars, prob, sess)
+        #         # (variable, model #, mode, individual #) - choice prob
+        #         self.mkt_prob_derivative[:, index, :, :] = np.array(prob_derivative)
+        #         self.mkt_choice_prob[:, index, :, :] = np.array(choice_prob)
+
+        #     if social_welfare:
+        #         utility0 = sess.run(utility, feed_dict={x: self.input_data['X_test']})
+        #         new_input = self.input_data['X_test'].copy()
+        #         new_input[drive_cost_name] += 1
+        #         utility1 = sess.run(utility, feed_dict={x: new_input})
+        #         # sw_ind is welfare change per person
+        #         sw_ind.append(np.log(np.sum(np.exp(utility1), axis=1)) - np.log(np.sum(np.exp(utility0), axis=1)))
+        #     '''
+        #     fig, ax = plt.subplots(figsize = (12, 12))
+        #     ax.scatter(self.X_train_raw[:, 11], self.mkt_choice_prob[11, index, 3,:])
+        #     fig.savefig('plots/test.png')
+        #     '''
+
+        #     sess.close()
+
+        # self.average_cp = np.mean(self.mkt_choice_prob, axis = 1)
+        # if social_welfare:
+        #     j = drive_idx
+        #     cost_var = drive_cost_idx_standard
+        #     # welfare
+        #     self.sw_ind = np.array(sw_ind)
+        #     # definition of util_derivative_test
+        #     # self.util_derivative_test = np.zeros((numContVars, self.numModels, self.numIndTest))
+        #     self.sw_change_0 = sw_ind/self.util_derivative_test[cost_var,:,:] #, axis = 1)
+        #     self.sw_change_1 = sw_ind/np.mean(self.util_derivative_test[cost_var,:,:], axis=0)[None, :]#, axis = 1)
+        #     self.sw_change_2 = sw_ind/np.mean(self.util_derivative_test[cost_var,:,:], axis=1)[:, None]#, axis = 1)
+        #     # sw_change_3 is used here? It is averaged over all iterations
+        #     self.sw_change_3 = sw_ind/np.mean(self.util_derivative_test[cost_var,:,:])#, axis = 1)
 
     def preprocess(self, raw_data_dir, num_training_samples = None):
         """Preprocess the raw data
@@ -523,9 +622,9 @@ class Analysis_Neural_Net:
         list_index_name = ["VOT_drive"]
         list_col_name = ["VOT_drive"]
         # self.vot_test = np.zeros((self.numModels, self.numIndTest))
-        content = np.mean(self.vot_drive_test, axis = (0,1))
+        content = np.ma.masked_invalid(self.vot_drive_test).mean()
         # content_all_model is a 0d array
-        content_all_model = np.mean(self.vot_drive_test, axis = 1)
+        content_all_model = np.ma.masked_invalid(self.vot_drive_test).mean(axis = 1)
 
         # print(content.shape)
         write_info_block(hdl_mean_result_file, intro, content, list_index_name, list_col_name)
@@ -539,9 +638,9 @@ class Analysis_Neural_Net:
         list_index_name = ["VOT_pt"]
         list_col_name = ["VOT_pt"]
         # self.vot_test = np.zeros((self.numModels, self.numIndTest))
-        content = np.mean(self.vot_pt_test, axis = (0,1))
+        content = np.ma.masked_invalid(self.vot_pt_test).mean()
         # content_all_model is a 0d array
-        content_all_model = np.mean(self.vot_pt_test, axis = 1)
+        content_all_model = np.ma.masked_invalid(self.vot_pt_test).mean(axis = 1)
 
         # print(content.shape)
         write_info_block(hdl_mean_result_file, intro, content, list_index_name, list_col_name)

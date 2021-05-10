@@ -13,6 +13,8 @@ import xgboost
 import copy
 import os
 import pickle as pkl
+import random
+import datetime
 
 class XGBoost_Model:
     def __init__(self,num_alt,MODEL_NAME,INCLUDE_VAL_SET,INCLUDE_RAW_SET, RUN_DIR):
@@ -156,7 +158,9 @@ class XGBoost_Model:
         gamma=self.h['gamma'],
         min_child_weight=self.h['min_child_weight'],
         eta=self.h['eta'],
-        n_estimators=self.h['n_estimators'])
+        n_estimators=self.h['n_estimators'],
+        random_state = random.seed(datetime.datetime.now()),
+        )
                         
     def train_model(self):
         """Train and save the model
