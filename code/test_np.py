@@ -55,3 +55,5 @@ if __name__ == '__main__':
     print(random.seed(datetime.datetime.now()))
     print(random.seed(datetime.datetime.now()))
     
+    # test datetime
+    

@@ -1,9 +1,22 @@
 import numpy as np
 import pandas as pd
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, accuracy_score
 import xgboost
 import os
 import pickle
+
+def accuracy_xgboost_random_state(rd_seed):
+    xgb_clf = xgboost.XGBClassifier(random_state = rd_seed)
+    xgb_clf.fit(input_data['X_train'], input_data['Y_train'])
+    prediction = xgb_clf.predict(input_data['X_test'], validate_features=True) 
+    return accuracy_score(input_data['Y_test'], prediction)
+
+def xgb_train_predict(subsample = None, random_state=0, seed=None, colsample_bytree = None, colsample_bylevel = None):
+    xgb = xgboost.XGBClassifier(subsample = subsample, random_state=random_state, seed=seed, \
+        colsample_bytree = colsample_bytree, colsample_bylevel = colsample_bylevel)
+    xgb.fit(input_data['X_train'], input_data['Y_train'])
+    y_ = xgb.predict(input_data['X_test'], validate_features=True) 
+    return y_
 
 if __name__ == '__main__':
     # data
@@ -41,7 +54,53 @@ if __name__ == '__main__':
     print("Mapping between the probabilities and the labels")
     print(xgb_clf.classes_)
 
-    # test PDP
+    # test randomness of XGBoost model
+    print("Test the influence of random_state")
+    # print("Subsample = 1.0 (By default)")
+    # check = xgb_train_predict()
+    # random_state = [1, 42, 58, 69, 72]
+    # seed = [None, 2, 24, 85, 96]
+    # subsample = None
+
+    # for r, s in zip(random_state, seed):
+    #     y_ = xgb_train_predict(subsample, r, s)
+    #     assert np.equal(y_, check).all()
+    #     print('CHECK! \t random_state: {} \t seed: {}'.format(r, s))
+
+    check = xgb_train_predict()
+    random_state = [1, 42, 58, 69, 72]
+    seed = [None, 2, 24, 85, 96]
+    subsample = 0.5
+
+    print("Subsample = 0.5")
+    for r, s in zip(random_state, seed):
+        y_ = xgb_train_predict(subsample = subsample, random_state = r, seed = s)
+        if not np.equal(y_, check).all():
+            print("Results not equal. Models are not deterministic")
+            break
+        # assert np.equal(y_, check).all()
+        print('CHECK! \t random_state: {} \t seed: {}'.format(r, s))
+
+    print("colsample_bytree = 0.5")
+    colsample_bytree = 0.5
+    for r, s in zip(random_state, seed):
+        y_ = xgb_train_predict(colsample_bytree = colsample_bytree, random_state = r, seed = s)
+        if not np.equal(y_, check).all():
+            print("Results not equal. Models are not deterministic")
+            break
+        # assert np.equal(y_, check).all()
+        print('CHECK! \t random_state: {} \t seed: {}'.format(r, s))
+    
+    print("colsample_bylevel = 0.5")
+    colsample_bylevel = 0.5
+    for r, s in zip(random_state, seed):
+        y_ = xgb_train_predict(colsample_bylevel = colsample_bylevel, random_state = r, seed = s)
+        if not np.equal(y_, check).all():
+            print("Results not equal. Models are not deterministic")
+            break
+        # assert np.equal(y_, check).all()
+        print('CHECK! \t random_state: {} \t seed: {}'.format(r, s))
+
 
     # test ALE
 

@@ -4,14 +4,14 @@
 Created on Thr May 06 17:01:00 2021
 
 This class is a pipeline for using XGBoost models for mode analysis. It would preprocess the csv files, train a model, analyse it, and output the economic metrics to files.
-You can run only some steps
+You can run the whole pipeline or only some steps.
 
 @author: Huanfa chen
 """
 
 # from analysis import Analysis
 # from typing_extensions import TypeVarTuple
-from Analysis_XGBoost import Analysis_XGBoost
+from Analysis_Neural_Net import Analysis_Neural_Net
 from Plot_Neural_Net import Plot_Neural_Net
 from Preprocess_data_DNN import Preprocess_data_DNN
 import matplotlib.pyplot as plt
@@ -27,15 +27,15 @@ if __name__ == "__main__":
        print("This is the main function...")
        ## parameters of the workflow
        # if PROCESS_RAW_DATA is True, the original data (.csv) will be processed and saved as two .pkl files. Otherwise, the processed files will be used (you need to guarantee that the .pkl files have be generated)
-       PROCESS_RAW_DATA = False
+       PROCESS_RAW_DATA = True
        # if RETRAIN_MODEL is True, DNN models will be retrained and saved as tf and .pkl files. Otherwise, the following steps will use the files saved from previous trainings.
-       RETRAIN_MODEL = False
+       RETRAIN_MODEL = True
        # if ANALYSIS_MODEL is True, the DNN models will be analysed. Otherwise, the result files saved from previous analysis will be used for plotting
        ANALYSIS_MODEL = True
        # if OUTPUT_FILES is True, the trained DNN models will be analysed and .csv files will be saved. It is ignored if ANALYSIS_MODEL is False
        OUTPUT_FILES = True
        # if OUTPUT_PLOTS is True, the trained DNN models will be analysed and plots will be saved
-       OUTPUT_PLOTS = False
+       OUTPUT_PLOTS = True
 
        # if True, use the designated testing data. Otherwise, use [Data]_X_Test.csv and [Data]_Y_Test.csv
        DESIGNATED_TEST_DATA = True
@@ -43,11 +43,12 @@ if __name__ == "__main__":
        file_Y_test = 'Original_Y_Test.csv'
 
        ## number of models. For quick testing, you can set num_models = 1
-       num_models = 3
+       num_models = 10
 
        # list of dataset and method names. Should have the same length
-       list_data_name = ['Original']
-       list_method_name = ['dnn']
+       # list_data_name = ['1.1_RandomUnderSampler_10','1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       list_data_name = ['1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       list_method_name = ['dnn' for x in list_data_name]
        for data_name, method_name in zip(list_data_name, list_method_name):
               # variables in London Dataset
               variables = ['age', 'male', 'driving_license',
@@ -173,15 +174,11 @@ if __name__ == "__main__":
 
                      assert len(plot_variables) == len(plot_vars) == len(plot_vars_standard) == len(plot_modes)
                      plot_NN = Plot_Neural_Net(path_model_pickle, dir_plots, data_name, method_name)
-                     plot_NN.plot_vot(currency)
+                     plot_NN.plot_vot('drive', currency)
+                     plot_NN.plot_vot('pt', currency)
                      
                      plot_NN.plot_choice_prob(plot_modes, plot_vars, plot_vars_standard, plot_variables)
                      plot_NN.plot_prob_derivative(plot_modes, plot_vars, plot_vars_standard, plot_variables)#, [86,17,31], ['C1: 0.602', 'C2: 0.595', 'C3: 0.586'])
                      plot_NN.plot_substitute_pattern(plot_vars, plot_vars_standard, plot_variables)
 
-
-       # model training
-       # model analysis
-       # writing the results
-       # plots
 

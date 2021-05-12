@@ -44,6 +44,13 @@ class XGBoost_Model:
         # }
         # h stands for hyperparameter
         self.h = {}
+        # default value
+        self.h['subsample'] = 0.7
+        self.h['colsample_bytree'] = 0.7
+        self.h['colsample_bylevel'] = 0.7
+        # random state
+        self.h['random_state'] = random.seed(datetime.datetime.now())
+
         if rand:
             self.h['max_depth']=np.random.choice(self.hs['max_depth'])
             self.h['gamma']=np.random.choice(self.hs['gamma'])
@@ -159,7 +166,10 @@ class XGBoost_Model:
         min_child_weight=self.h['min_child_weight'],
         eta=self.h['eta'],
         n_estimators=self.h['n_estimators'],
-        random_state = random.seed(datetime.datetime.now()),
+        subsample=self.h['subsample'],
+        colsample_bytree=self.h['colsample_bytree'],
+        colsample_bylevel=self.h['colsample_bylevel'],
+        random_state=self.h['random_state']
         )
                         
     def train_model(self):
