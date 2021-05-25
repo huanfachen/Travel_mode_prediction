@@ -35,7 +35,7 @@ if __name__ == "__main__":
        # if OUTPUT_FILES is True, the trained DNN models will be analysed and .csv files will be saved. It is ignored if ANALYSIS_MODEL is False
        OUTPUT_FILES = True
        # if OUTPUT_PLOTS is True, the trained DNN models will be analysed and plots will be saved
-       OUTPUT_PLOTS = True
+       OUTPUT_PLOTS = False
 
        # if True, use the designated testing data. Otherwise, use [Data]_X_Test.csv and [Data]_Y_Test.csv
        DESIGNATED_TEST_DATA = True

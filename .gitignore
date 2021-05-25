@@ -6,6 +6,9 @@ __pycache__/
 # resampled data
 data/*.*.csv
 
+# plot
+plots/*
+
 # huge model files
 Models/*.pkl
 # C extensions
