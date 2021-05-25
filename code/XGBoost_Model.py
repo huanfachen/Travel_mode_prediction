@@ -107,7 +107,7 @@ class XGBoost_Model:
             input_data_raw (list, optional): containing numpy arrays of raw training, validation, and testing data. Defaults to None.
             num_training_samples (int, optional): the number of records for model training. If None, all training data in input_data are used. Defaults to None.
         """        
-        print("Loading datasets...")
+        # print("Loading datasets...")
         self.colnames = list(input_data['X_train'].columns)
         if num_training_samples is None:
             self.X_train = input_data['X_train'].values
@@ -135,10 +135,10 @@ class XGBoost_Model:
                 self.X_val_raw = input_data_raw['X_val'].values
                 self.Y_val_raw = input_data_raw['Y_val'].values
                 
-        print("Training set", self.X_train.shape, self.Y_train.shape)
-        print("Testing set", self.X_test.shape, self.Y_test.shape)
-        if self.INCLUDE_VAL_SET:
-            print("Validation set", self.X_val.shape, self.Y_val.shape)
+        # print("Training set", self.X_train.shape, self.Y_train.shape)
+        # print("Testing set", self.X_test.shape, self.Y_test.shape)
+        # if self.INCLUDE_VAL_SET:
+        #     print("Validation set", self.X_val.shape, self.Y_val.shape)
         # save dim
         self.N_train,self.D = self.X_train.shape
         self.N_test,self.D = self.X_test.shape

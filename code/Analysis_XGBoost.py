@@ -600,12 +600,15 @@ class Analysis_XGBoost:
                     content = content_all_model[:,ind,:]
                     write_info_block(hdl, intro, content, list_index_name, list_col_name)
 
-        ### 2.4 write market share
+        ### 2.4 write market share. A dataframe with rows representing travel modes and one column (named 'mean')
         intro = "# market share\n"
-        list_index_name = ["market_share"]
-        list_col_name = self.modes
+        # list_index_name = ["market_share"]
+        # list_col_name = self.modes
+        list_index_name = self.modes
+        list_col_name = ["mean"]
+
         # self.mkt_share_test = np.zeros((self.numModels, self.numAlt))
-        content = np.mean(self.mkt_share_test, axis = 0, keepdims = True)
+        content = np.mean(self.mkt_share_test, axis = 0, keepdims = True).T
         content_all_model = self.mkt_share_test
 
         print(content.shape)
@@ -614,7 +617,7 @@ class Analysis_XGBoost:
             # average over individuals
             for ind, hdl in zip(range(self.numModels), list_dhl_sep_model_result_file):
                     # using None to avoid losing dimensions. Would get a np array of [1, self.numAlt]
-                    content = content_all_model[None,ind,:]
+                    content = content_all_model[None,ind,:].T
                     write_info_block(hdl, intro, content, list_index_name, list_col_name)
 
         ### 2.4 write VOT

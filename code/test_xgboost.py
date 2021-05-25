@@ -4,6 +4,8 @@ from sklearn.metrics import classification_report, accuracy_score
 import xgboost
 import os
 import pickle
+import random
+import datetime
 
 def accuracy_xgboost_random_state(rd_seed):
     xgb_clf = xgboost.XGBClassifier(random_state = rd_seed)
@@ -91,13 +93,19 @@ if __name__ == '__main__':
         # assert np.equal(y_, check).all()
         print('CHECK! \t random_state: {} \t seed: {}'.format(r, s))
     
+    check = np.nan
     print("colsample_bylevel = 0.5")
+    print("Using datetime now() as random state")
     colsample_bylevel = 0.5
-    for r, s in zip(random_state, seed):
-        y_ = xgb_train_predict(colsample_bylevel = colsample_bylevel, random_state = r, seed = s)
-        if not np.equal(y_, check).all():
-            print("Results not equal. Models are not deterministic")
-            break
+    for _ in range(10):
+
+        if check is np.nan:
+            check = xgb_train_predict(colsample_bylevel = colsample_bylevel, random_state = random.seed(datetime.datetime.now()))
+        else:
+            y_ = xgb_train_predict(colsample_bylevel = colsample_bylevel, random_state = r, seed = s)
+            if not np.equal(y_, check).all():
+                print("Results not equal. Models are not deterministic")
+                break
         # assert np.equal(y_, check).all()
         print('CHECK! \t random_state: {} \t seed: {}'.format(r, s))
 

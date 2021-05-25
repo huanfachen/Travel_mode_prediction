@@ -339,7 +339,7 @@ class Analysis_Neural_Net:
         self.X_train_raw = np.array(X_train_raw)
 
     def write_result(self, result_dir, mean_result_file, model_result_file_prefix, model_result_file_suffix):
-        """[summary]
+        """Write model results to csv files
 
         Args:
             result_dir (str): directory for saving result files
@@ -462,12 +462,15 @@ class Analysis_Neural_Net:
                     content = content_all_model[:,ind,:]
                     write_info_block(hdl, intro, content, list_index_name, list_col_name)
 
-        ### 2.4 write market share
+        ### 2.4 write market share. A dataframe with rows representing travel modes and one column (named 'mean')
         intro = "# market share\n"
-        list_index_name = ["market_share"]
-        list_col_name = self.modes
+        # list_index_name = ["market_share"]
+        # list_col_name = self.modes
+        list_index_name = self.modes
+        list_col_name = ["mean"]
+
         # self.mkt_share_test = np.zeros((self.numModels, self.numAlt))
-        content = np.mean(self.mkt_share_test, axis = 0, keepdims = True)
+        content = np.mean(self.mkt_share_test, axis = 0, keepdims = True).T
         content_all_model = self.mkt_share_test
 
         print(content.shape)
@@ -476,7 +479,7 @@ class Analysis_Neural_Net:
             # average over individuals
             for ind, hdl in zip(range(self.numModels), list_dhl_sep_model_result_file):
                     # using None to avoid losing dimensions. Would get a np array of [1, self.numAlt]
-                    content = content_all_model[None,ind,:]
+                    content = content_all_model[None,ind,:].T
                     write_info_block(hdl, intro, content, list_index_name, list_col_name)
 
         ### 2.4 write VOT
@@ -542,10 +545,12 @@ class Analysis_Neural_Net:
             test_report = classification_report(Y_true, y_pred, target_names=self.modes, output_dict=True)
             # a list of accuracy, macro_f1_score, macro_recall
             list_overall_metrics.append([test_report['accuracy'], test_report['macro avg']['f1-score'], test_report['macro avg']['recall']])
+            # class specific metrics: precision, recall, f1_score, support
             list_class_metrics.append(pd.DataFrame.from_dict({k: test_report[k] for k in self.modes}))
 
         mean_overall_metrics = np.mean(list_overall_metrics, axis = 0)
         mean_class_metrics = np.mean(list_class_metrics, axis = 0)
+        # turn into a dataframe
         mean_class_metrics = pd.DataFrame(mean_class_metrics, index = list_class_metrics[0].index, columns = list_class_metrics[0].columns)
 
         list_confusion_matrix = list(map(lambda x:confusion_matrix(Y_true, x), list_Y_predict))

@@ -1,2 +1,2 @@
-model_checkpoint_path: "1.2_One-SidedSelection_4_dnn_model_1.ckpt"
-all_model_checkpoint_paths: "1.2_One-SidedSelection_4_dnn_model_1.ckpt"
+model_checkpoint_path: "2.2_SMOTENC_10_dnn_model_8.ckpt"
+all_model_checkpoint_paths: "2.2_SMOTENC_10_dnn_model_8.ckpt"

@@ -19,7 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pickle
-import tensorflow as tf
+# import tensorflow as tf
 import sys
 import os
 # from dnn import FeedForward_DNN
@@ -47,57 +47,65 @@ if __name__ == "__main__":
        ## number of models. For quick testing, you can set num_models = 1
        num_models = 10
 
-       # list of dataset and method names. Should have the same length
-       list_data_name = ['1.1_RandomUnderSampler_10','1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
-       # list_data_name = ['1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
-       list_method_name = ['dnn' for x in list_data_name]
+       # variables in London Dataset (14 vars)
+       variables = ['age', 'male', 'driving_license',
+              'car_ownership', 'distance', 'dur_walking', 'dur_cycling',
+              'dur_pt_access', 'dur_pt_inv', 'dur_pt_int_total',
+              'pt_n_interchanges', 'dur_driving', 'cost_transit',
+              'cost_driving_total']
+
+       # standard_vars stands for continuous variables  (11 vars)
+       standard_vars = ['age', 'distance', 'dur_walking', 'dur_cycling',
+              'dur_pt_access', 'dur_pt_inv', 'dur_pt_int_total',
+              'pt_n_interchanges', 'dur_driving', 'cost_transit',
+              'cost_driving_total']
+
+       # the index of continuous variables in 'variables'
+       standard_vars_idx = list(map(lambda x:variables.index(x), standard_vars))
+       # [0,4,5,6,7,8,9,10,11,12,13]
+       drive_cost_idx = variables.index('cost_driving_total')
+       drive_cost_idx_standard = standard_vars.index('cost_driving_total')
+       drive_time_idx = variables.index('dur_driving')
+       pt_cost_idx = variables.index('cost_transit')
+       pt_cost_idx_standard = standard_vars.index('cost_transit')
+       pt_time_idx = variables.index('dur_pt_inv')
+
+       modes = ['walk', 'cycle', 'pt', 'drive']
+       drive_mode_idx = modes.index('drive')
+       pt_mode_idx = modes.index('pt')
+
+       # data_dir = 'data/london/london_processed.pkl'
+       # raw_data_dir =  'data/london/london_processed_raw.pkl'
+       suffix = ''
+
+       # number of alternative modes
+       num_alt = len(modes)
+       INCLUDE_VAL_SET = False
+       INCLUDE_RAW_SET = True
+       
+       # N_bootstrap_sample = None
+       
+       # set num_training_samples as None. If not None, only the first num_training_samples lines of training data would be used.
+       num_training_samples = None
+       # df = []
+       
+       # the current wd is 'dnn-for-economic-information'
+       dir_data = 'Data'
+       dir_model = 'Models'
+       dir_result = 'Results'
+       dir_plots = 'Plots'
+
+       # list of dataset and method names
+       # In sum, there are 61 datasets (including Original)
+       list_all_data = ['Original', '1.1_RandomUnderSampler_10',
+       '1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       list_data_name = list_all_data
+       # list_data_name = ['2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       # list_data_name = ['1.1_RandomUnderSampler_10','1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       # list_data_name = ['1.2_One-SidedSelection_10']
+       # list_data_name = ['1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       list_method_name = ['xgb' for x in list_data_name]
        for data_name, method_name in zip(list_data_name, list_method_name):
-              # variables in London Dataset (14 vars)
-              variables = ['age', 'male', 'driving_license',
-                     'car_ownership', 'distance', 'dur_walking', 'dur_cycling',
-                     'dur_pt_access', 'dur_pt_inv', 'dur_pt_int_total',
-                     'pt_n_interchanges', 'dur_driving', 'cost_transit',
-                     'cost_driving_total']
-
-              # standard_vars stands for continuous variables  (11 vars)
-              standard_vars = ['age', 'distance', 'dur_walking', 'dur_cycling',
-                     'dur_pt_access', 'dur_pt_inv', 'dur_pt_int_total',
-                     'pt_n_interchanges', 'dur_driving', 'cost_transit',
-                     'cost_driving_total']
-
-              # the index of continuous variables in 'variables'
-              standard_vars_idx = list(map(lambda x:variables.index(x), standard_vars))
-              # [0,4,5,6,7,8,9,10,11,12,13]
-              drive_cost_idx = variables.index('cost_driving_total')
-              drive_cost_idx_standard = standard_vars.index('cost_driving_total')
-              drive_time_idx = variables.index('dur_driving')
-              pt_cost_idx = variables.index('cost_transit')
-              pt_cost_idx_standard = standard_vars.index('cost_transit')
-              pt_time_idx = variables.index('dur_pt_inv')
-
-              modes = ['walk', 'pt', 'cycle', 'drive']
-              drive_mode_idx = modes.index('drive')
-              pt_mode_idx = modes.index('pt')
-
-              # data_dir = 'data/london/london_processed.pkl'
-              # raw_data_dir =  'data/london/london_processed_raw.pkl'
-              suffix = ''
-
-              # number of alternative modes
-              num_alt = len(modes)
-              INCLUDE_VAL_SET = False
-              INCLUDE_RAW_SET = True
-              
-              # N_bootstrap_sample = None
-              
-              num_training_samples = 7000
-              # df = []
-              
-              # the current wd is 'dnn-for-economic-information'
-              dir_data = 'Data'
-              dir_model = 'Models'
-              dir_result = 'Results'
-              dir_plots = 'Plots'
 
               # path to the csv data files (training and testing)
               path_X_train_csv = os.path.join(dir_data, "{}_X_Train.csv".format(data_name))
@@ -140,7 +148,7 @@ if __name__ == "__main__":
                             xgb.init_hyperparameter_space() # could change the hyperparameter here by using F_DNN.change_hyperparameter(new)
                             # with rand as False, F_DNN will use the optimal parameter obtained from the hyperparameter tuning. See dnn.py
                             xgb.init_hyperparameter(rand=False) # could change the hyperparameter here by using F_DNN.change_hyperparameter(new)                     
-                            xgb.bootstrap_data(N_bootstrap_sample=len(input_data['X_train']))
+                            # xgb.bootstrap_data(N_bootstrap_sample=len(input_data['X_train']))
                             xgb.build_model()
                             # train and save the model
                             xgb.train_model()
