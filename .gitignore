@@ -3,6 +3,9 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+# vscode config file
+.vscode/
+
 # resampled data
 data/*.*.csv
 
