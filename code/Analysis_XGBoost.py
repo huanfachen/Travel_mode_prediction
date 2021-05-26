@@ -8,7 +8,7 @@ Created on Wed Apr 19 12:51:14 2021
 import numpy as np
 import pandas as pd
 import pickle
-import tensorflow as tf
+#import tensorflow as tf
 from sklearn.preprocessing import StandardScaler
 import os
 from sklearn.metrics import confusion_matrix, accuracy_score, classification_report

@@ -1,5 +1,5 @@
 {
-    "python.pythonPath": "/home/huanfa/anaconda3/envs/travel_mode_pred/bin/python",
+    "python.pythonPath": "/home/spacetimelab/Downloads/ENTER/envs/travel_mode_pred/bin/python",
     "python.analysis.extraPaths": ["./code"],
     "terminal.integrated.experimentalLinkProvider": true,
 }

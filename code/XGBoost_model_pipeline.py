@@ -29,7 +29,7 @@ if __name__ == "__main__":
        print("This is the main function...")
        ## parameters of the workflow
        # if PROCESS_RAW_DATA is True, the original data (.csv) will be processed and saved as two .pkl files. Otherwise, the processed files will be used (you need to guarantee that the .pkl files have be generated)
-       PROCESS_RAW_DATA = True
+       PROCESS_RAW_DATA = False
        # if RETRAIN_MODEL is True, DNN models will be retrained and saved as tf and .pkl files. Otherwise, the following steps will use the files saved from previous trainings.
        RETRAIN_MODEL = True
        # if ANALYSIS_MODEL is True, the DNN models will be analysed. Otherwise, the result files saved from previous analysis will be used for plotting
@@ -37,7 +37,7 @@ if __name__ == "__main__":
        # if OUTPUT_FILES is True, the trained DNN models will be analysed and .csv files will be saved. It is ignored if ANALYSIS_MODEL is False
        OUTPUT_FILES = True
        # if OUTPUT_PLOTS is True, the trained DNN models will be analysed and plots will be saved
-       OUTPUT_PLOTS = True
+       OUTPUT_PLOTS = False
 
        # if True, use the designated testing data. Otherwise, use [Data]_X_Test.csv and [Data]_Y_Test.csv
        DESIGNATED_TEST_DATA = True
@@ -90,7 +90,7 @@ if __name__ == "__main__":
        # df = []
        
        # the current wd is 'dnn-for-economic-information'
-       dir_data = 'Data'
+       dir_data = 'data'
        dir_model = 'Models'
        dir_result = 'Results'
        dir_plots = 'Plots'
@@ -99,6 +99,9 @@ if __name__ == "__main__":
        # In sum, there are 61 datasets (including Original)
        list_all_data = ['Original', '1.1_RandomUnderSampler_10',
        '1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+       list_all_data_no_original = ['1.1_RandomUnderSampler_10',
+       '1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
+
        list_data_name = list_all_data
        # list_data_name = ['2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
        # list_data_name = ['1.1_RandomUnderSampler_10','1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
