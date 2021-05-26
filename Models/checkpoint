@@ -1,2 +1,2 @@
-model_checkpoint_path: "2.2_SMOTENC_10_dnn_model_8.ckpt"
-all_model_checkpoint_paths: "2.2_SMOTENC_10_dnn_model_8.ckpt"
+model_checkpoint_path: "2.3_ADASYN_9_dnn_model_9.ckpt"
+all_model_checkpoint_paths: "2.3_ADASYN_9_dnn_model_9.ckpt"
