@@ -68,8 +68,11 @@ if __name__ == "__main__":
        pt_cost_idx_standard = standard_vars.index('cost_transit')
        pt_time_idx = variables.index('dur_pt_inv')
 
-       # modes = ['walk', 'pt', 'cycle', 'drive']
        modes = ['walk', 'cycle', 'pt', 'drive']
+       # mapping from travel modes to numbers. Would be used in data preprocessing
+       # 'walk':0, 'cycle':1, 'pt':2, 'drive':3
+       choice_map = {mode:i for i,mode in enumerate(modes)}
+
        drive_mode_idx = modes.index('drive')
        pt_mode_idx = modes.index('pt')
 
@@ -124,7 +127,7 @@ if __name__ == "__main__":
               print(os.path.exists(dir_model))
 
               if PROCESS_RAW_DATA is True:
-                     Preprocess_data_DNN(path_X_train_csv, path_Y_train_csv, path_X_test_csv, path_Y_test_csv, path_data_raw_pkl, path_data_processed_pkl, variables, standard_vars)
+                     Preprocess_data_DNN(path_X_train_csv, path_Y_train_csv, path_X_test_csv, path_Y_test_csv, path_data_raw_pkl, path_data_processed_pkl, variables, standard_vars, choice_map)
 
               if RETRAIN_MODEL is True:
 

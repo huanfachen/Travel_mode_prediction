@@ -29,13 +29,13 @@ if __name__ == "__main__":
        print("This is the main function...")
        ## parameters of the workflow
        # if PROCESS_RAW_DATA is True, the original data (.csv) will be processed and saved as two .pkl files. Otherwise, the processed files will be used (you need to guarantee that the .pkl files have be generated)
-       PROCESS_RAW_DATA = False
+       PROCESS_RAW_DATA = True
        # if RETRAIN_MODEL is True, DNN models will be retrained and saved as tf and .pkl files. Otherwise, the following steps will use the files saved from previous trainings.
-       RETRAIN_MODEL = True
+       RETRAIN_MODEL = False
        # if ANALYSIS_MODEL is True, the DNN models will be analysed. Otherwise, the result files saved from previous analysis will be used for plotting
-       ANALYSIS_MODEL = True
+       ANALYSIS_MODEL = False
        # if OUTPUT_FILES is True, the trained DNN models will be analysed and .csv files will be saved. It is ignored if ANALYSIS_MODEL is False
-       OUTPUT_FILES = True
+       OUTPUT_FILES = False
        # if OUTPUT_PLOTS is True, the trained DNN models will be analysed and plots will be saved
        OUTPUT_PLOTS = False
 
@@ -71,6 +71,9 @@ if __name__ == "__main__":
        pt_time_idx = variables.index('dur_pt_inv')
 
        modes = ['walk', 'cycle', 'pt', 'drive']
+       # mapping from travel modes to numbers. Would be used in data preprocessing
+       # 'walk':0, 'cycle':1, 'pt':2, 'drive':3
+       choice_map = {mode:i for i,mode in enumerate(modes)}
        drive_mode_idx = modes.index('drive')
        pt_mode_idx = modes.index('pt')
 
@@ -130,7 +133,7 @@ if __name__ == "__main__":
               print(os.path.exists(dir_model))
 
               if PROCESS_RAW_DATA is True:
-                     Preprocess_data_DNN(path_X_train_csv, path_Y_train_csv, path_X_test_csv, path_Y_test_csv, path_data_raw_pkl, path_data_processed_pkl, variables, standard_vars)
+                     Preprocess_data_DNN(path_X_train_csv, path_Y_train_csv, path_X_test_csv, path_Y_test_csv, path_data_raw_pkl, path_data_processed_pkl, variables, standard_vars, choice_map)
 
               if RETRAIN_MODEL is True:
 

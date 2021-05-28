@@ -13,7 +13,7 @@ import pickle as pkl
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler
 
-def Preprocess_data_DNN (file_X_train, file_Y_train, file_X_test, file_Y_test, file_pkl_raw, file_pkl_processed, variables, cont_variables):
+def Preprocess_data_DNN (file_X_train, file_Y_train, file_X_test, file_Y_test, file_pkl_raw, file_pkl_processed, variables, cont_variables, choice_map):
        """Preprocess the csv files and output pickle files
 
        Args:
@@ -25,6 +25,7 @@ def Preprocess_data_DNN (file_X_train, file_Y_train, file_X_test, file_Y_test, f
            file_pkl_processed (str): path to the pickle file of processed data
            variables (list of str): list of variables
            cont_variables (list of str): list of continuous variables
+           choice_map (dict between travel mode and number): dict. e.g. {'walk':0, 'pt':1, 'cycle':2, 'drive':3}
        """       
 
        X_train = pd.read_csv(file_X_train)[variables]
@@ -32,7 +33,7 @@ def Preprocess_data_DNN (file_X_train, file_Y_train, file_X_test, file_Y_test, f
        X_test = pd.read_csv(file_X_test)[variables]
        Y_test = pd.read_csv(file_Y_test)
 
-       choice_map = {'walk':0, 'pt':1, 'cycle':2, 'drive':3}
+       # choice_map = {'walk':0, 'pt':1, 'cycle':2, 'drive':3}
        Y_train = Y_train['travel_mode'].map(choice_map)
        Y_test = Y_test['travel_mode'].map(choice_map)
 
