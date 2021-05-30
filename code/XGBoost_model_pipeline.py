@@ -45,7 +45,7 @@ if __name__ == "__main__":
        file_Y_test = 'Original_Y_Test.csv'
 
        ## number of models. For quick testing, you can set num_models = 1
-       num_models = 1
+       num_models = 10
 
        # variables in London Dataset (14 vars)
        variables = ['age', 'male', 'driving_license',
