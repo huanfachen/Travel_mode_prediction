@@ -90,7 +90,7 @@ if __name__ == "__main__":
        # df = []
        
        # the current wd is 'dnn-for-economic-information'
-       dir_data = 'Data'
+       dir_data = 'data'
        dir_model = 'Models'
        dir_result = 'Results'
        dir_plots = 'Plots'
@@ -102,7 +102,7 @@ if __name__ == "__main__":
        # list_data_name = list_all_data       
        
        list_second_part = ['2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
-       list_data_name = list_second_part
+       list_data_name = list_all_data
        # list_data_name = ['1.1_RandomUnderSampler_10','1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9']
        # list_data_name = ['Original']
        list_method_name = ['dnn' for x in list_data_name]
