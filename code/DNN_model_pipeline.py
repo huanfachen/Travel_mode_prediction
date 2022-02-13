@@ -43,7 +43,8 @@ if __name__ == "__main__":
        file_Y_test = 'Original_Y_Test.csv'
 
        ## number of models. For quick testing, you can set num_models = 1
-       num_models = 10
+       # num_models = 10
+       num_models = 1
 
        # variables in London Dataset
        variables = ['age', 'male', 'driving_license',
@@ -86,7 +87,7 @@ if __name__ == "__main__":
        
        # N_bootstrap_sample = None
        
-       num_training_samples = 7000
+       num_training_samples = None
        # df = []
        
        # the current wd is 'dnn-for-economic-information'
@@ -99,12 +100,11 @@ if __name__ == "__main__":
        # In sum, there are 61 datasets (including Original)
        list_all_data = ['Original', '1.1_RandomUnderSampler_10',
        '1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9','1.2_One-SidedSelection_10','1.2_One-SidedSelection_1','1.2_One-SidedSelection_2','1.2_One-SidedSelection_3','1.2_One-SidedSelection_4','1.2_One-SidedSelection_5','1.2_One-SidedSelection_6','1.2_One-SidedSelection_7','1.2_One-SidedSelection_8','1.2_One-SidedSelection_9','1.3_NeighbourhoodCleaningRule_10','1.3_NeighbourhoodCleaningRule_1','1.3_NeighbourhoodCleaningRule_2','1.3_NeighbourhoodCleaningRule_3','1.3_NeighbourhoodCleaningRule_4','1.3_NeighbourhoodCleaningRule_5','1.3_NeighbourhoodCleaningRule_6','1.3_NeighbourhoodCleaningRule_7','1.3_NeighbourhoodCleaningRule_8','1.3_NeighbourhoodCleaningRule_9','2.1_RandomOverSampler_10','2.1_RandomOverSampler_1','2.1_RandomOverSampler_2','2.1_RandomOverSampler_3','2.1_RandomOverSampler_4','2.1_RandomOverSampler_5','2.1_RandomOverSampler_6','2.1_RandomOverSampler_7','2.1_RandomOverSampler_8','2.1_RandomOverSampler_9','2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
-       # list_data_name = list_all_data       
        
        list_second_part = ['2.2_SMOTENC_10','2.2_SMOTENC_1','2.2_SMOTENC_2','2.2_SMOTENC_3','2.2_SMOTENC_4','2.2_SMOTENC_5','2.2_SMOTENC_6','2.2_SMOTENC_7','2.2_SMOTENC_8','2.2_SMOTENC_9','2.3_ADASYN_10','2.3_ADASYN_1','2.3_ADASYN_2','2.3_ADASYN_3','2.3_ADASYN_4','2.3_ADASYN_5','2.3_ADASYN_6','2.3_ADASYN_7','2.3_ADASYN_8','2.3_ADASYN_9']
-       list_data_name = list_all_data
+       # list_data_name = list_all_data
        # list_data_name = ['1.1_RandomUnderSampler_10','1.1_RandomUnderSampler_1','1.1_RandomUnderSampler_2','1.1_RandomUnderSampler_3','1.1_RandomUnderSampler_4','1.1_RandomUnderSampler_5','1.1_RandomUnderSampler_6','1.1_RandomUnderSampler_7','1.1_RandomUnderSampler_8','1.1_RandomUnderSampler_9']
-       # list_data_name = ['Original']
+       list_data_name = list_all_data
        list_method_name = ['dnn' for x in list_data_name]
        for data_name, method_name in zip(list_data_name, list_method_name):
               # path to the csv data files (training and testing)
